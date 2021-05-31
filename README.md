@@ -11,12 +11,17 @@
 * dragon.pgm -> 3,565,158.4 bytes
 
 ### Bytes de las imágenes comprimidas:
-* baboon_bin -> 54,522,595.2 bytes
-* dog_bin -> 6,291,456 bytes
-* dragon_bim -> 1,572,864 bytes
+* baboon_bin -> 5,198,580 bytes
+* dog_bin -> 5,981,740 bytes
+* dragon_bin -> 1,507,480 bytes
+
+### Bytes de las imágenes reconstruidas:
+* baboon_new.pgm -> 992,928 bytes
+* dog_new.pgm -> 2,622,027 bytes
+* dragon_new.pgm -> 3,329,336 bytes
 
 ## Relación entre el archivo original .pgm y el archivo binario
-$$\frac{sin comprimir}{comprimido}$$
+$$ \frac{sin comprimir}{comprimido} $$
 $$\frac{1363148.8}{54522595.2} = 0.025$$
 $$\frac{3250585.6}{6291456} = 0.52$$
 $$\frac{3565158.4}{1572864} = 2.27$$
