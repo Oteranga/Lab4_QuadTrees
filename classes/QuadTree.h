@@ -12,7 +12,7 @@ class Quad_tree{
         int verify_cardinality(Quadrant quadrant, Point new_node);
         bool in_range(Quadrant quadrant, Point point);
         void switch_children(Node* _root, Node* new_node);
-        void write_leaf_nodes(Node* _root, fstream& file, int nodes_in_file);
+        void write_leaf_nodes(Node* _root, fstream& file);
     public:
         Quad_tree():number_nodes(0),root(new Node){};
         Quad_tree(Quadrant quadrant);
@@ -24,6 +24,7 @@ class Quad_tree{
             return make_pair(this->quadrant.xmax,this->quadrant.ymax);
         }
 };
+
 
 void Quad_tree::read_image(string file_name){
     int height = 0, width = 0, max_value = 0;
@@ -62,30 +63,24 @@ void Quad_tree::write_image(string filename){
     file.open(filename,ios::binary|ios::out|ios::app);
     if(!file)
         exit(EXIT_FAILURE); 
-    int nodes_in_file = 0;
-    write_leaf_nodes(this->root,file,nodes_in_file);
+    write_leaf_nodes(this->root,file);
     file.close();
 }
 
-void Quad_tree::write_leaf_nodes(Node* _root, fstream& file,int nodes_in_file){
+void Quad_tree::write_leaf_nodes(Node* _root, fstream& file){
     if(_root->no_children()){
         if(_root->key==-1)
             return;
         else{
-            //file.seekp(nodes_in_file*sizeof(Node));
-            Node node = *_root;
-            file.write(reinterpret_cast<char*>(&node),sizeof(Node));
-            //file.write("\n",1);
-            //nodes_in_file++;
+            TempNode node(_root->quadrant,_root->key);
+            file.write((char*)&node,sizeof(TempNode));
         }
     } else {
         for(int i=0; i<4; i++){
-            write_leaf_nodes(_root->children[i],file,nodes_in_file);
+            write_leaf_nodes(_root->children[i],file);
         }
     }
 }
-
-
 
 Quad_tree::Quad_tree(Quadrant quadrant){
     this->root = new Node;
@@ -119,7 +114,7 @@ bool Quad_tree::in_range(Quadrant quadrant, Point point){
 void Quad_tree::insert(Point point, int key){
     auto new_node = new Node(point,key);
     auto temp_root = this->root;
-    number_nodes++;
+    //number_nodes++;
     insert(temp_root, new_node);
 }
 
@@ -144,12 +139,14 @@ void Quad_tree::switch_children(Node* _root, Node* new_node){
 
 bool Quad_tree::insert(Node* _root,Node* new_node){
     if(!in_range(_root->quadrant,new_node->point)) return false;
+    if(new_node->key==_root->key) return false;
     if(!_root->no_children()){
         switch_children(_root,new_node);
     } else {
-        if(_root->empty_point()){
+        if(_root->empty_point() || split_limit(_root->quadrant)){
             _root->point = new_node->point;
             _root->key = new_node->key;
+            this->number_nodes++;
             return true;
         } else{
             Quadrant r_quadrant = _root->quadrant;
@@ -159,6 +156,7 @@ bool Quad_tree::insert(Node* _root,Node* new_node){
             _root->children[3] = new Node(Quadrant{(r_quadrant.xmin+r_quadrant.xmax)/2,r_quadrant.xmax,(r_quadrant.ymin+r_quadrant.ymax)/2,r_quadrant.ymax});
             switch_children(_root,_root);
             switch_children(_root,new_node);
+            this->number_nodes--;
             _root->point = Point{-1,-1};
             _root->key = -1;
         }

@@ -1,6 +1,8 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <utility>
+#include <fstream>
 
 using namespace std;
 
@@ -34,4 +36,24 @@ struct Node{
     bool no_children(){
         return (children[0] == nullptr && children[1] == nullptr && children[2] == nullptr && children[3] == nullptr);
     }
+
+};
+
+class TempNode{
+    public:
+    int key;
+    int xmin;
+    int xmax;
+    int ymin;
+    int ymax;
+
+    TempNode(Quadrant quadrant, int key){
+        this->xmin = quadrant.xmin;
+        this->xmax = quadrant.xmax;
+        this->ymin = quadrant.ymin;
+        this->ymax = quadrant.ymax;
+        this->key = key;
+    }
+
+    TempNode():key(0),xmin(0),xmax(0),ymin(0),ymax(0){}
 };
