@@ -12,7 +12,7 @@ class Quad_tree{
         int verify_cardinality(Quadrant quadrant, Point new_node);
         bool in_range(Quadrant quadrant, Point point);
         void switch_children(Node* _root, Node* new_node);
-        void write_leaf_nodes(Node* _root, ofstream& file);
+        void write_leaf_nodes(Node* _root, fstream& file, int nodes_in_file);
     public:
         Quad_tree():number_nodes(0),root(new Node){};
         Quad_tree(Quadrant quadrant);
@@ -20,7 +20,9 @@ class Quad_tree{
         int size();
         void read_image(string file_name);
         void write_image(string file_name);
-        void generate_new_image(string image_bin, char* file_name);
+        pair<int,int> get_dimensions(){ 
+            return make_pair(this->quadrant.xmax,this->quadrant.ymax);
+        }
 };
 
 void Quad_tree::read_image(string file_name){
@@ -43,7 +45,8 @@ void Quad_tree::read_image(string file_name){
     //Max value in the image
     ss >> max_value;
 
-    this->quadrant= Quadrant{0,width,0,height};
+    this->quadrant = Quadrant{0,width,0,height};
+    this->root->quadrant = Quadrant{0,width,0,height};
 
     int num;
     for(int i = 0; i < height; ++i){
@@ -55,55 +58,34 @@ void Quad_tree::read_image(string file_name){
 }
 
 void Quad_tree::write_image(string filename){
-    ofstream file;
-    file.open(filename,ios::binary);
+    fstream file;
+    file.open(filename,ios::binary|ios::out|ios::app);
     if(!file)
         exit(EXIT_FAILURE); 
-    write_leaf_nodes(this->root,file);
+    int nodes_in_file = 0;
+    write_leaf_nodes(this->root,file,nodes_in_file);
     file.close();
 }
 
-void Quad_tree::write_leaf_nodes(Node* _root, ofstream& file){
+void Quad_tree::write_leaf_nodes(Node* _root, fstream& file,int nodes_in_file){
     if(_root->no_children()){
         if(_root->key==-1)
             return;
-        else
-            file.write((char*)&_root,sizeof(Node));
+        else{
+            //file.seekp(nodes_in_file*sizeof(Node));
+            Node node = *_root;
+            file.write(reinterpret_cast<char*>(&node),sizeof(Node));
+            //file.write("\n",1);
+            //nodes_in_file++;
+        }
     } else {
         for(int i=0; i<4; i++){
-            write_leaf_nodes(_root->children[i],file);
+            write_leaf_nodes(_root->children[i],file,nodes_in_file);
         }
     }
 }
 
-void Quad_tree::generate_new_image(string image_bin, char* file_name){
-    ifstream file_bin;
-    FILE* file_new;
-    file_bin.open(file_name);
-    file_new = fopen(file_name, "w");
-    int height = root->quadrant.ymax;
-    int width = root->quadrant.xmax;
-    int image[height][width];
-    fprintf(file_new,"P2\n");
-    fprintf(file_new,"%d %d\n",width,height);
-    fprintf(file_new,"255\n");
-    Node* temp;
-    while(!file_bin.eof()){
-        file_bin.read((char*)&temp,sizeof(temp));
-        for(int i = temp->quadrant.xmin; i < temp->quadrant.xmax; ++i){
-            for (int j = temp->quadrant.ymin; j < temp->quadrant.ymax; ++j){
-                image[i][j] = temp->key;
-            }
-        }
-    }
-    for(int i = 0; i < height; i++){
-        for(int j = 0; j < width; j++){
-            fprintf(file_new, "%d\n", image[i][j]);
-        }
-    }
-    file_bin.close();
-    fclose(file_new);
-}
+
 
 Quad_tree::Quad_tree(Quadrant quadrant){
     this->root = new Node;
@@ -131,7 +113,7 @@ int Quad_tree::verify_cardinality(Quadrant quadrant, Point new_node){
 }
 
 bool Quad_tree::in_range(Quadrant quadrant, Point point){
-    return (point.x >= quadrant.xmin && point.y >= quadrant.ymin && point.x < quadrant.xmax && quadrant.ymax > point.y);
+    return (point.x >= quadrant.xmin && point.y >= quadrant.ymin && point.x <= quadrant.xmax && quadrant.ymax >= point.y);
 }
 
 void Quad_tree::insert(Point point, int key){
